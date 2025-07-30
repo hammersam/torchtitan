@@ -1,0 +1,80 @@
+[job]
+dump_folder = "./outputs/1b_moe"
+description = "1b moe training"
+print_args = false
+use_for_integration_test = true
+
+[profiling]
+enable_profiling = false
+save_traces_folder = "profile_trace"
+profile_freq = 10
+enable_memory_snapshot = false
+save_memory_snapshot_folder = "memory_snapshot"
+
+[metrics]
+log_freq = 1
+disable_color_printing = false
+enable_tensorboard = false
+save_tb_folder = "tb"
+enable_wandb = false
+
+[model]
+name              = "llama4"          # 直接用内置 Llama4 实现
+flavor            = "1b_moe"          # 自定义子配置名
+hidden_size       = 2048              # ↓   18 层 × 2 048 dim ≈ 1 B 含路由器
+intermediate_size = 5504
+num_layers        = 18
+num_heads         = 16
+num_experts       = 8                 # 8 个 FFN expert
+router_top_k      = 2                 # top‑2 routing
+vocab_size     = 129280 
+tokenizer_path = "./assets/tokenizer/DeepSeek-V3"
+
+[optimizer]
+name = "AdamW"
+lr = 4e-3
+eps = 1e-15
+
+[lr_scheduler]
+warmup_steps = 2  # lr scheduler warm up, normally 20% of the train steps
+decay_ratio = 0.8  # lr scheduler decay ratio, 80% of the train steps
+decay_type = "linear"
+lr_min = 0.1
+
+[training]
+seq_len = 2048
+max_norm = 1.0
+compile = false
+dataset = "c4"
+steps = 200_000
+local_batch_size = 16
+gradient_accumulation_steps = 8
+global_batch_size = 128
+
+[parallelism]
+data_parallel_replicate_degree = 1
+data_parallel_shard_degree = -1
+fsdp_reshard_after_forward = "default"
+tensor_parallel_degree = 1
+enable_async_tensor_parallel = false
+pipeline_parallel_degree = 1
+context_parallel_degree = 1
+expert_parallel_degree = 1
+
+[checkpoint]
+enable_checkpoint = false
+folder = "checkpoint"
+interval = 10
+last_save_model_only = false
+export_dtype = "float32"
+async_mode = "disabled"  # ["disabled", "async", "async_with_pinned_mem"]
+
+[activation_checkpoint]
+mode = "none"  # ["none", "selective", "full"]
+selective_ac_option = '2'  # 'int' = ac every positive int layer or 'op', ac based on ops policy
+
+[float8]
+enable_fsdp_float8_all_gather = false
+precompute_float8_dynamic_scale_for_fsdp = false
+filter_fqns = ["output", "router.gate"]
+moe_fqns = ["experts"]
