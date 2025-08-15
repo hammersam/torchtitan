@@ -43,6 +43,16 @@ def build_test_list():
     same root config file.
     """
     integration_tests_flavors = defaultdict(list)
+    integration_tests_flavors["nsa_debug_model.toml"] = [
+        OverrideDefinitions(
+            [
+                [],
+            ],
+            "NSA default",
+            "nsa_default",
+            ngpu=1,
+        ),
+    ]
     integration_tests_flavors["debug_model.toml"] = [
         OverrideDefinitions(
             [
